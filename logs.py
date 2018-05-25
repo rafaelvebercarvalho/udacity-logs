@@ -6,11 +6,10 @@ DATABASE = "news"
 # Um - Quais sao os tres artigos mais populares de todos os tempos?
 query_t1 = ("Quais sao os tres artigos mais populares de todos os tempos?")
 query_1 = (
-    "select articles.title, count(*) as v "
-    "from articles inner join log on log.path "
-    "like concat('%', articles.slug, '%') "
-    "where log.status like '%200%' group by "
-    "articles.title, log.path order by v desc limit 3")
+    "select articles.title, count(*) as views "
+    "from articles, log where log.path = concat('/article/', articles.slug) "
+    "AND status = '200 OK' "
+    "group by title order by views desc limit 3;")
 
 # Dois - Quem sao os autores de artigos mais populares de todos os tempos
 query_t2 = ("Autores de artigos mais populares de todos os tempos?")
@@ -32,10 +31,18 @@ query_3 = (
     "as log_percentage group by day order by perc desc) as final_query "
     "where perc >= 1")
 
+def connect(DATABASE):
+    try:
+        db = psycopg2.connect(dbname=DATABASE)
+        return db
+
+    except psycopg2.Error as e:
+        print ("Problema na conexao do banco")
+        sys.exit(1)
 
 def get_results(query):
     # Receber a query
-    db = psycopg2.connect(database=DATABASE)
+    db = connect(DATABASE)
     cursor = db.cursor()
     cursor.execute(query)
     return cursor.fetchall()
